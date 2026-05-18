@@ -17,6 +17,7 @@ from ..registry.store import ModuleRegistry
 from ..dispatcher.http_dispatcher import HttpDispatcher
 from ..session.manager import SessionManager
 from ..transport.sse import SSEManager
+from ..resilience.dead_letter import dlq
 
 router = APIRouter()
 
@@ -133,6 +134,18 @@ async def _execute_and_respond(request_id, session_id, dag, req):
             summary_parts.append(res["summary"])
     message = " | ".join(summary_parts) if summary_parts else "执行完成"
 
+    # 全局降级：如果所有模块均失败，使用基座模型直接回答
+    node_states = dag_result.get("node_states", {})
+    all_failed = all(
+        s.get("status") in ("failed", "skipped")
+        for nid, s in node_states.items()
+        if "aggregated" not in s.get("output", {})
+    ) and len(node_states) > 0
+
+    if all_failed:
+        message = f"所有业务模块均不可用（已记录到死信队列）。您的请求：{req.message}"
+        dag_result["fallback"] = True
+
     # 更新会话
     _session_manager.append_message(session_id, "user", req.message)
     _session_manager.append_message(session_id, "assistant", message)
@@ -232,3 +245,65 @@ async def human_callback(session_id: str, body: dict[str, Any]):
     """人工介入回调。"""
     action = body.get("action", "approve")
     return {"status": "resumed", "message": f"已收到反馈: {action}，继续执行后续步骤"}
+
+
+# ── 运维端点：健康检查、熔断器状态、死信队列 ─────────────────────
+
+@router.get("/modules/health")
+async def modules_health():
+    """检查所有模块健康状态。"""
+    results = {}
+    for m in _registry.list_all():
+        healthy = await _dispatcher.health_check(m)
+        circuit = _dag_executor.get_circuit_state(m.module_id)
+        results[m.module_id] = {
+            "healthy": healthy,
+            "circuit": circuit,
+            "port": m.port,
+        }
+    return {"modules": results}
+
+
+@router.get("/circuit-breaker")
+async def circuit_breaker_status():
+    """查看所有模块的熔断器状态。"""
+    states = {}
+    for m in _registry.list_all():
+        states[m.module_id] = _dag_executor.get_circuit_state(m.module_id)
+    return {"circuits": states}
+
+
+@router.post("/circuit-breaker/{module_id}/reset")
+async def reset_circuit(module_id: str):
+    """手动重置某个模块的熔断器。"""
+    _dag_executor.reset_circuit(module_id)
+    return {"status": "reset", "module_id": module_id}
+
+
+@router.get("/dlq")
+async def list_dlq(module_id: str | None = None, limit: int = 50):
+    """查看死信队列。"""
+    letters = dlq.list(limit=limit, module_id=module_id)
+    return {
+        "total": dlq.count(module_id=module_id),
+        "items": [dl.model_dump() for dl in letters],
+    }
+
+
+@router.post("/dlq/{dlq_id}/replay")
+async def replay_dlq(dlq_id: str):
+    """重放死信队列中的任务。"""
+    letter = dlq.get(dlq_id)
+    if not letter:
+        raise HTTPException(status_code=404, detail="DLQ entry not found")
+
+    # 重新执行该模块的单节点 DAG
+    dag = _task_planner.plan(
+        intent_module_id=letter.module_id,
+        query=letter.payload.get("query", ""),
+        complexity="single",
+    )
+    result = await _dag_executor.execute(dag, letter.payload)
+    dlq.mark_replayed(dlq_id)
+
+    return {"dlq_id": dlq_id, "replay_result": result}
