@@ -1,0 +1,29 @@
+services:
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-https://token-plan-cn.xiaomimimo.com/anthropic}
+      - API_KEY=${API_KEY}
+      - MODEL_NAME=${MODEL_NAME:-mimo-v2.5-pro}
+      - INTENT_MODE=${INTENT_MODE:-mock}
+    volumes:
+      - ./modules:/app/modules:ro
+    depends_on:
+      - echo
+      - weather
+
+  echo:
+    build:
+      context: ./modules/echo
+    ports:
+      - "8001:8001"
+
+  weather:
+    build:
+      context: ./modules/weather
+    ports:
+      - "8002:8002"

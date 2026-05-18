@@ -1,0 +1,21 @@
+module:
+  id: "echo"
+  name: "Echo 回显模块"
+  version: "0.1.0"
+  description: "将用户输入原样返回，用于系统验证和测试"
+  capabilities:
+    - intent: "echo"
+      description: "回显用户消息，用于测试连通性"
+      keywords: ["echo", "ping", "测试", "test", "你好", "hello", "hi"]
+      example_queries:
+        - "echo hello"
+        - "测试一下"
+        - "你好"
+  interface:
+    protocol: "http"
+    port: 8001
+    health_check_path: "/health"
+  runtime:
+    framework: "fastapi"
+    timeout_seconds: 30
+    supports_streaming: false

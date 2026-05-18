@@ -1,0 +1,54 @@
+syntax = "proto3";
+package superbase.module.v1;
+
+import "google/protobuf/struct.proto";
+
+service BusinessModule {
+  rpc Execute(TaskRequest) returns (TaskResponse);
+  rpc ExecuteStream(TaskRequest) returns (stream TaskEvent);
+  rpc HealthCheck(HealthRequest) returns (HealthResponse);
+}
+
+message TaskRequest {
+  string task_id = 1;
+  string query = 2;
+  map<string, string> context = 3;
+  google.protobuf.Struct input_payload = 4;
+  TaskConfig config = 5;
+}
+
+message TaskConfig {
+  int32 timeout_seconds = 1;
+  bool streaming = 2;
+  string priority = 3;
+  map<string, string> metadata = 4;
+}
+
+message TaskResponse {
+  string task_id = 1;
+  string status = 2;
+  google.protobuf.Struct output_payload = 3;
+  string summary = 4;
+  repeated Artifact artifacts = 5;
+}
+
+message Artifact {
+  string type = 1;
+  string name = 2;
+  string url = 3;
+  map<string, string> metadata = 4;
+}
+
+message TaskEvent {
+  string task_id = 1;
+  string event_type = 2;
+  google.protobuf.Struct data = 3;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+  string version = 2;
+  map<string, string> details = 3;
+}

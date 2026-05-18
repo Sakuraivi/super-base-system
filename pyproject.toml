@@ -1,0 +1,12 @@
+[project]
+name = "super-base-system"
+version = "0.1.0"
+description = "Super Base Orchestration System"
+requires-python = ">=3.11"
+
+[tool.uv.workspace]
+members = ["packages/*", "gateway", "modules/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

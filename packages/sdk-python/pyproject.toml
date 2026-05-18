@@ -1,0 +1,15 @@
+[project]
+name = "superbase-sdk"
+version = "0.1.0"
+description = "Super Base System - Module Development SDK"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0,<3",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "httpx>=0.27",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,21 @@
+module:
+  id: "weather"
+  name: "天气查询模块"
+  version: "0.1.0"
+  description: "查询指定城市的天气信息"
+  capabilities:
+    - intent: "weather_query"
+      description: "查询城市天气、温度、天气状况"
+      keywords: ["天气", "weather", "温度", "气温", "下雨", "forecast", "天气预报"]
+      example_queries:
+        - "今天北京天气怎么样"
+        - "上海会下雨吗"
+        - "What's the weather in Tokyo"
+  interface:
+    protocol: "http"
+    port: 8002
+    health_check_path: "/health"
+  runtime:
+    framework: "fastapi"
+    timeout_seconds: 30
+    supports_streaming: false

@@ -1,0 +1,44 @@
+# Super Base System
+
+## 意图识别评估数据集
+# 每条包含: input (用户输入), expected_module (期望模块), description (测试说明)
+
+- input: "你好世界"
+  expected_module: "echo"
+  description: "基本问候应路由到 echo 模块"
+
+- input: "echo hello"
+  expected_module: "echo"
+  description: "英文 echo 指令"
+
+- input: "测试一下系统"
+  expected_module: "echo"
+  description: "测试指令"
+
+- input: "ping"
+  expected_module: "echo"
+  description: "ping 指令"
+
+- input: "今天北京天气怎么样"
+  expected_module: "weather"
+  description: "天气查询 - 北京"
+
+- input: "上海会下雨吗"
+  expected_module: "weather"
+  description: "天气查询 - 下雨"
+
+- input: "深圳气温多少度"
+  expected_module: "weather"
+  description: "天气查询 - 气温"
+
+- input: "What's the weather in Tokyo"
+  expected_module: "weather"
+  description: "英文天气查询"
+
+- input: "帮我写一首诗"
+  expected_module: null
+  description: "无匹配模块的场景"
+
+- input: "数据库连接失败了"
+  expected_module: null
+  description: "无匹配模块的场景 - 技术问题"
