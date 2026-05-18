@@ -1,0 +1,24 @@
+module:
+  id: "code_review"
+  name: "代码审查模块"
+  version: "0.1.0"
+  description: "对代码进行安全性、性能、风格的全面审查"
+  capabilities:
+    - intent: "code_review"
+      description: "审查代码质量、安全漏洞和性能问题"
+      keywords: ["代码审查", "code review", "审查", "review", "安全检查", "性能分析"]
+      example_queries:
+        - "帮我审查这段代码"
+        - "检查代码有没有安全问题"
+        - "review this code"
+    - intent: "security_scan"
+      description: "专注于安全漏洞扫描"
+      keywords: ["安全扫描", "漏洞检测", "CVE", "SQL注入", "XSS"]
+  interface:
+    protocol: "http"
+    port: 8003
+    health_check_path: "/health"
+  runtime:
+    framework: "fastapi"
+    timeout_seconds: 120
+    supports_streaming: false

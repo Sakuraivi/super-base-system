@@ -42,3 +42,15 @@
 - input: "数据库连接失败了"
   expected_module: null
   description: "无匹配模块的场景 - 技术问题"
+
+- input: "帮我审查这段代码"
+  expected_module: "code_review"
+  description: "代码审查请求"
+
+- input: "检查这个PR有没有安全问题"
+  expected_module: "code_review"
+  description: "安全检查请求"
+
+- input: "review this code"
+  expected_module: "code_review"
+  description: "英文代码审查"

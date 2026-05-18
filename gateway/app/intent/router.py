@@ -5,13 +5,14 @@ from typing import TYPE_CHECKING
 from superbase_sdk.schemas import IntentResult
 from .mock_classifier import MockClassifier
 from .cloud_classifier import CloudClassifier
+from .complexity import ComplexityClassifier
 
 if TYPE_CHECKING:
     from ..registry.store import ModuleRegistry
 
 
 class IntentRouter:
-    """意图路由器：根据配置选择 mock / cloud 模式。"""
+    """意图路由器：根据配置选择 mock / cloud 模式，支持复杂度分级模型路由。"""
 
     def __init__(self, mode: str, registry: ModuleRegistry):
         self.mode = mode
@@ -21,9 +22,15 @@ class IntentRouter:
 
     async def route(self, user_message: str) -> IntentResult | None:
         if self.mode == "mock":
-            return self._mock.classify(user_message)
+            result = self._mock.classify(user_message)
+            if result:
+                result.complexity = ComplexityClassifier.classify(user_message)
+            return result
 
-        # cloud 模式: 从 registry 获取模块能力描述，传给 LLM
+        # cloud 模式: 复杂度分级 + 模型路由
+        complexity = ComplexityClassifier.classify(user_message)
+        model = ComplexityClassifier.select_model(complexity)
+
         modules_info = [
             {
                 "module_id": m.module_id,
@@ -32,4 +39,7 @@ class IntentRouter:
             }
             for m in self._registry.list_all()
         ]
-        return await self._cloud.classify(user_message, modules_info)
+        result = await self._cloud.classify(user_message, modules_info, model=model)
+        if result:
+            result.complexity = complexity
+        return result

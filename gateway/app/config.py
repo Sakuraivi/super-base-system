@@ -25,6 +25,9 @@ class Settings:
     model_name: str = field(
         default_factory=lambda: os.getenv("MODEL_NAME", "mimo-v2.5-pro")
     )
+    model_light: str = field(
+        default_factory=lambda: os.getenv("MODEL_LIGHT", "mimo-v2.5-pro")
+    )
 
     # Intent Router
     intent_mode: str = field(

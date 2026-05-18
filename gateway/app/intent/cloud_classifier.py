@@ -8,7 +8,7 @@ from superbase_sdk.schemas import IntentResult
 
 
 class CloudClassifier:
-    """通过 LLM API 进行意图分类。"""
+    """通过 LLM API 进行意图分类，支持动态模型选择。"""
 
     def __init__(self):
         self._client = anthropic.Anthropic(
@@ -16,11 +16,14 @@ class CloudClassifier:
             api_key=settings.api_key,
         )
 
-    async def classify(self, text: str, modules: list[dict]) -> IntentResult | None:
+    async def classify(
+        self, text: str, modules: list[dict], model: str | None = None
+    ) -> IntentResult | None:
         system_prompt = build_intent_prompt(text, modules)
+        model = model or settings.model_name
 
         resp = self._client.messages.create(
-            model=settings.model_name,
+            model=model,
             max_tokens=1024,
             system=system_prompt,
             messages=[{"role": "user", "content": text}],
