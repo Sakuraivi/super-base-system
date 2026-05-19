@@ -1,5 +1,8 @@
 """Code Review module: LLM-powered code analysis."""
 import json
+from dotenv import load_dotenv
+load_dotenv()
+
 from superbase_sdk import ModuleServer, TaskRequest, TaskResponse, Artifact, LLMClient
 
 server = ModuleServer("code_review", "0.2.0")

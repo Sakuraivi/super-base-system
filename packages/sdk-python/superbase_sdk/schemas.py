@@ -18,7 +18,7 @@ class TaskConfig(BaseModel):
 class TaskRequest(BaseModel):
     task_id: str
     query: str
-    context: dict[str, str] = Field(default_factory=dict)
+    context: dict[str, Any] = Field(default_factory=dict)
     input_payload: dict[str, Any] = Field(default_factory=dict)
     config: TaskConfig = Field(default_factory=TaskConfig)
 

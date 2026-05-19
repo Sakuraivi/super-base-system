@@ -1,4 +1,7 @@
 """Weather module: LLM-powered weather analysis with natural language responses."""
+from dotenv import load_dotenv
+load_dotenv()
+
 from superbase_sdk import ModuleServer, TaskRequest, TaskResponse, LLMClient
 
 server = ModuleServer("weather", "0.2.0")

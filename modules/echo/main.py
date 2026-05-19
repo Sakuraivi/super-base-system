@@ -1,4 +1,7 @@
 """Echo module: LLM-powered conversational echo with context awareness."""
+from dotenv import load_dotenv
+load_dotenv()
+
 from superbase_sdk import ModuleServer, TaskRequest, TaskResponse, LLMClient
 
 server = ModuleServer("echo", "0.2.0")
