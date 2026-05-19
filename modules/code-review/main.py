@@ -1,28 +1,44 @@
-import random
-from superbase_sdk import ModuleServer, TaskRequest, TaskResponse, Artifact
+"""Code Review module: LLM-powered code analysis."""
+import json
+from superbase_sdk import ModuleServer, TaskRequest, TaskResponse, Artifact, LLMClient
 
-server = ModuleServer("code_review", "0.1.0")
+server = ModuleServer("code_review", "0.2.0")
+llm = LLMClient()
 
-# Mock 代码审查结果
-MOCK_FINDINGS = [
-    {"severity": "high", "file": "auth.py", "line": 42, "message": "Potential SQL injection: string concatenation used in query", "suggestion": "Use parameterized queries"},
-    {"severity": "medium", "file": "api/routes.py", "line": 15, "message": "Missing input validation on user_id parameter", "suggestion": "Add Pydantic schema validation"},
-    {"severity": "low", "file": "utils.py", "line": 88, "message": "Unused import: os.path", "suggestion": "Remove unused import"},
-    {"severity": "medium", "file": "db/models.py", "line": 23, "message": "N+1 query detected in get_user_posts()", "suggestion": "Use selectinload or joinedload"},
-    {"severity": "high", "file": "auth.py", "line": 67, "message": "Hardcoded API key in source code", "suggestion": "Move to environment variables"},
-]
+SYSTEM_PROMPT = """你是一个专业的代码审查专家。请分析用户提供的代码或代码描述，返回 JSON 格式的审查结果。
+
+输出格式：
+{
+  "findings": [
+    {"severity": "high|medium|low", "file": "文件名", "line": 行号, "message": "问题描述", "suggestion": "修复建议"}
+  ],
+  "summary": "一句话总结"
+}
+
+重点关注：安全漏洞、性能问题、代码规范、潜在 bug、可维护性。
+如果用户没有提供具体代码，根据描述分析可能的问题。"""
 
 
 @server.execute
 async def handle(req: TaskRequest) -> TaskResponse:
-    # Mock: 随机选取 2-4 个 findings
-    count = random.randint(2, 4)
-    findings = random.sample(MOCK_FINDINGS, min(count, len(MOCK_FINDINGS)))
-    high_count = sum(1 for f in findings if f["severity"] == "high")
+    prompt = (
+        f"请对以下代码/需求进行代码审查：\n\n"
+        f"{req.query}\n\n"
+        f"返回 JSON 格式的审查结果。"
+    )
 
-    summary = f"代码审查完成，发现 {len(findings)} 个问题（{high_count} 个高危）"
-    if high_count > 0:
-        summary += "，建议优先修复高危问题"
+    try:
+        result = await llm.complete_json(prompt, system=SYSTEM_PROMPT, max_tokens=2048)
+        findings = result.get("findings", [])
+        llm_summary = result.get("summary", "")
+    except (json.JSONDecodeError, Exception) as e:
+        # LLM 返回非 JSON 时降级
+        text = await llm.complete(prompt, system=SYSTEM_PROMPT, max_tokens=1024)
+        findings = []
+        llm_summary = text
+
+    high_count = sum(1 for f in findings if f.get("severity") == "high")
+    summary = llm_summary or f"代码审查完成，发现 {len(findings)} 个问题（{high_count} 个高危）"
 
     return TaskResponse(
         task_id=req.task_id,
@@ -32,8 +48,8 @@ async def handle(req: TaskRequest) -> TaskResponse:
             "findings": findings,
             "total_issues": len(findings),
             "high_severity": high_count,
-            "medium_severity": sum(1 for f in findings if f["severity"] == "medium"),
-            "low_severity": sum(1 for f in findings if f["severity"] == "low"),
+            "medium_severity": sum(1 for f in findings if f.get("severity") == "medium"),
+            "low_severity": sum(1 for f in findings if f.get("severity") == "low"),
         },
         artifacts=[
             Artifact(

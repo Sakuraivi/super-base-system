@@ -101,3 +101,40 @@ class TaskPlanner:
             nodes=nodes,
             metadata={"type": "parallel" if parallel else "pipeline", "query": query},
         )
+
+    def plan_condition(
+        self,
+        condition_expr: str,
+        true_module_id: str,
+        false_module_id: str,
+        query: str,
+    ) -> DAGDefinition:
+        """生成带条件分支的 DAG。"""
+        cond = DAGNode(
+            id="cond_1",
+            type=NodeType.CONDITION,
+            condition=condition_expr,
+            config={"true_branch": ["node_true"], "false_branch": ["node_false"]},
+        )
+        node_true = DAGNode(
+            id="node_true",
+            type=NodeType.MODULE,
+            module_id=true_module_id,
+            depends_on=["cond_1"],
+        )
+        node_false = DAGNode(
+            id="node_false",
+            type=NodeType.MODULE,
+            module_id=false_module_id,
+            depends_on=["cond_1"],
+        )
+        agg = DAGNode(
+            id="node_agg",
+            type=NodeType.AGGREGATOR,
+            depends_on=["node_true", "node_false"],
+            input_from=["node_true", "node_false"],
+        )
+        return DAGDefinition(
+            nodes=[cond, node_true, node_false, agg],
+            metadata={"type": "condition", "query": query},
+        )

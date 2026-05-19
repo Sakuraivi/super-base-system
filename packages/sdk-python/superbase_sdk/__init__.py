@@ -10,6 +10,7 @@ from .schemas import (
     IntentResult,
 )
 from .server import ModuleServer
+from .llm import LLMClient
 
 __all__ = [
     "TaskRequest",
@@ -22,4 +23,5 @@ __all__ = [
     "ModuleManifest",
     "IntentResult",
     "ModuleServer",
+    "LLMClient",
 ]

@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "superbase-gateway.fullname" . }}
+  labels:
+    {{- include "superbase-gateway.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "superbase-gateway.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "superbase-gateway.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: gateway
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            - name: INTENT_MODE
+              value: {{ .Values.config.intentMode | quote }}
+            - name: MODEL_NAME
+              value: {{ .Values.config.modelName | quote }}
+            - name: MODEL_LIGHT
+              value: {{ .Values.config.modelLight | quote }}
+            - name: DATABASE_URL
+              value: "postgresql+asyncpg://superbase:superbase@{{ include "superbase-gateway.fullname" . }}-postgresql:5432/superbase"
+            - name: REDIS_URL
+              value: "redis://{{ include "superbase-gateway.fullname" . }}-redis-master:6379/0"
+            - name: QDRANT_HOST
+              value: "{{ include "superbase-gateway.fullname" . }}-qdrant"
+            - name: QDRANT_PORT
+              value: "6333"
+            - name: API_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "superbase-gateway.fullname" . }}-secrets
+                  key: api-base-url
+                  optional: true
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "superbase-gateway.fullname" . }}-secrets
+                  key: api-key
+                  optional: true
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

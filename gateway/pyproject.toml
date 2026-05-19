@@ -13,6 +13,12 @@ dependencies = [
     "pyyaml>=6.0",
     "python-dotenv>=1.0",
     "redis>=5.0",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.29",
+    "opentelemetry-api>=1.24",
+    "opentelemetry-sdk>=1.24",
+    "opentelemetry-instrumentation-fastapi>=0.45b0",
+    "prometheus-client>=0.20",
 ]
 
 [build-system]

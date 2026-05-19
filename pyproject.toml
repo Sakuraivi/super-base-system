@@ -10,3 +10,4 @@ members = ["packages/*", "gateway", "modules/*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+pythonpath = ["gateway"]

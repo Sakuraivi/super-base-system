@@ -11,27 +11,77 @@ services:
       - MODEL_NAME=${MODEL_NAME:-mimo-v2.5-pro}
       - MODEL_LIGHT=${MODEL_LIGHT:-mimo-v2.5-pro}
       - INTENT_MODE=${INTENT_MODE:-mock}
+      - DATABASE_URL=postgresql+asyncpg://superbase:superbase@postgres:5432/superbase
+      - REDIS_URL=redis://redis:6379/0
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
     volumes:
       - ./modules:/app/modules:ro
     depends_on:
+      - postgres
+      - redis
+      - qdrant
       - echo
       - weather
       - code-review
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: superbase
+      POSTGRES_USER: superbase
+      POSTGRES_PASSWORD: superbase
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+  qdrant:
+    image: qdrant/qdrant:v1.9.1
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrantdata:/qdrant/storage
 
   echo:
     build:
       context: ./modules/echo
     ports:
       - "8001:8001"
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-https://token-plan-cn.xiaomimimo.com/anthropic}
+      - API_KEY=${API_KEY}
+      - MODEL_NAME=${MODEL_NAME:-mimo-v2.5-pro}
 
   weather:
     build:
       context: ./modules/weather
     ports:
       - "8002:8002"
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-https://token-plan-cn.xiaomimimo.com/anthropic}
+      - API_KEY=${API_KEY}
+      - MODEL_NAME=${MODEL_NAME:-mimo-v2.5-pro}
 
   code-review:
     build:
       context: ./modules/code-review
     ports:
       - "8003:8003"
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-https://token-plan-cn.xiaomimimo.com/anthropic}
+      - API_KEY=${API_KEY}
+      - MODEL_NAME=${MODEL_NAME:-mimo-v2.5-pro}
+
+volumes:
+  pgdata:
+  redisdata:
+  qdrantdata:

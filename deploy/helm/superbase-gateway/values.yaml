@@ -1,0 +1,101 @@
+# Super Base Gateway - Default Values
+
+replicaCount: 2
+
+image:
+  repository: superbase/gateway
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: superbase.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# ── Gateway Configuration ────────────────────────────────────────
+
+config:
+  intentMode: "cloud"
+  modelName: "mimo-v2.5-pro"
+  modelLight: "mimo-v2.5-pro"
+
+# ── Resources ────────────────────────────────────────────────────
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+# ── HPA (Horizontal Pod Autoscaler) ──────────────────────────────
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# ── PDB (Pod Disruption Budget) ──────────────────────────────────
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# ── Probes ───────────────────────────────────────────────────────
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+# ── Sub-chart: PostgreSQL ────────────────────────────────────────
+
+postgresql:
+  enabled: true
+  auth:
+    database: superbase
+    username: superbase
+    password: superbase
+  primary:
+    persistence:
+      size: 10Gi
+
+# ── Sub-chart: Redis ─────────────────────────────────────────────
+
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+  master:
+    persistence:
+      size: 2Gi
+
+# ── Sub-chart: Qdrant ────────────────────────────────────────────
+
+qdrant:
+  enabled: true
+  persistence:
+    size: 5Gi

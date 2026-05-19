@@ -55,5 +55,41 @@ class Settings:
         )
     )
 
+    # PostgreSQL
+    database_url: str = field(
+        default_factory=lambda: os.getenv("DATABASE_URL", "")
+    )
+
+    # STM (Short-Term Memory)
+    stm_window_size: int = field(
+        default_factory=lambda: int(os.getenv("STM_WINDOW_SIZE", "10"))
+    )
+    stm_max_tokens: int = field(
+        default_factory=lambda: int(os.getenv("STM_MAX_TOKENS", "2000"))
+    )
+    stm_ttl_seconds: int = field(
+        default_factory=lambda: int(os.getenv("STM_TTL_SECONDS", "86400"))
+    )
+
+    # LTM (Long-Term Memory)
+    ltm_embedding_dimension: int = field(
+        default_factory=lambda: int(os.getenv("LTM_EMBEDDING_DIMENSION", "384"))
+    )
+    ltm_chunk_size: int = field(
+        default_factory=lambda: int(os.getenv("LTM_CHUNK_SIZE", "512"))
+    )
+    ltm_chunk_overlap: int = field(
+        default_factory=lambda: int(os.getenv("LTM_CHUNK_OVERLAP", "64"))
+    )
+    ltm_search_top_k: int = field(
+        default_factory=lambda: int(os.getenv("LTM_SEARCH_TOP_K", "5"))
+    )
+    qdrant_host: str = field(
+        default_factory=lambda: os.getenv("QDRANT_HOST", "localhost")
+    )
+    qdrant_port: int = field(
+        default_factory=lambda: int(os.getenv("QDRANT_PORT", "6333"))
+    )
+
 
 settings = Settings()

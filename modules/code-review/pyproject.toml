@@ -6,6 +6,7 @@ dependencies = [
     "superbase-sdk",
     "fastapi>=0.110",
     "uvicorn>=0.29",
+    "anthropic>=0.40",
 ]
 
 [build-system]
